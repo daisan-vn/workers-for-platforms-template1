@@ -20,7 +20,7 @@
 	"dispatch_namespaces": [
 		{
 			"binding": "dispatcher",
-			"namespace": "workers-for-platforms-template",
+			"namespace": "vibesdk-default-namespace",
 			"remote": true
 		}
 	],
@@ -35,8 +35,9 @@
 	],
 	// Environment variables
 	"vars": {
-		// Dispatch namespace name - must match the namespace above
-		"DISPATCH_NAMESPACE_NAME": "workers-for-platforms-template",
+		// Dispatch namespace name - must match the namespace above.
+		// Pointed at VibeSDK's namespace so *.daisan.ai serves apps built by daisan.ai.
+		"DISPATCH_NAMESPACE_NAME": "vibesdk-default-namespace",
 		// Optional: Your platform's custom domain (e.g., "myplatform.com"). Leave empty to use workers.dev
 		"CUSTOM_DOMAIN": "daisan.ai"
 	},
