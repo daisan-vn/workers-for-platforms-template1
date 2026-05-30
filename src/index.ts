@@ -13,6 +13,68 @@ export interface Env {
 // e.g. 3000-abc123-0123456789abcdef.daisan.ai
 const PREVIEW_SUBDOMAIN_RE = /^\d{4,5}-.+-[a-z0-9_-]{16}$/;
 
+function esc(s: string): string {
+  return s.replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c] as string));
+}
+
+function notFoundResponse(host: string, slug: string): Response {
+  const h = esc(host);
+  const s = esc(slug);
+  const html = `<!doctype html>
+<html lang="en"><head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>App not found · Daisan AI</title>
+<style>
+  *{box-sizing:border-box} html,body{margin:0;height:100%}
+  body{background:#0b0b12;color:#e7e7ee;font:15px/1.5 system-ui,-apple-system,Segoe UI,Roboto,sans-serif;
+    display:flex;align-items:center;justify-content:center;padding:24px;overflow:hidden}
+  .glow{position:fixed;left:50%;top:42%;transform:translate(-50%,-50%);width:140vw;max-width:1400px;height:70vh;
+    filter:blur(130px);opacity:.30;pointer-events:none;
+    background:radial-gradient(closest-side,rgba(255,61,0,.5),rgba(217,70,239,.28) 45%,rgba(56,118,255,.22) 70%,transparent)}
+  .card{position:relative;width:100%;max-width:520px;background:rgba(20,20,30,.7);border:1px solid rgba(255,255,255,.08);
+    border-radius:16px;padding:32px;backdrop-filter:blur(8px)}
+  .badge{display:inline-flex;align-items:center;gap:8px;font-size:12px;color:#ff6a3d;
+    background:rgba(255,61,0,.1);border:1px solid rgba(255,61,0,.25);padding:5px 10px;border-radius:999px}
+  h1{font-size:22px;margin:18px 0 6px;letter-spacing:-.3px}
+  p.sub{color:#a0a0ad;margin:0 0 20px}
+  .kv{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.07);border-radius:10px;padding:12px 14px;margin-bottom:18px}
+  .kv div{display:flex;justify-content:space-between;gap:12px;font-size:13px;padding:3px 0}
+  .kv span{color:#8a8a96} .kv code{color:#d7d7e0;font-family:ui-monospace,Consolas,monospace;word-break:break-all;text-align:right}
+  h2{font-size:12px;text-transform:uppercase;letter-spacing:.12em;color:#8a8a96;margin:0 0 8px}
+  ul{margin:0 0 22px;padding-left:18px;color:#b6b6c2;font-size:13px} li{margin:4px 0}
+  .row{display:flex;gap:10px;flex-wrap:wrap}
+  a.btn{flex:1;min-width:150px;text-align:center;text-decoration:none;font-size:14px;font-weight:500;padding:10px 14px;border-radius:10px}
+  a.primary{background:#ff3d00;color:#fff} a.ghost{background:transparent;color:#cfcfd8;border:1px solid rgba(255,255,255,.12)}
+  .ft{margin-top:18px;font-size:12px;color:#6f6f7a;text-align:center}
+</style></head>
+<body>
+  <div class="glow"></div>
+  <div class="card">
+    <span class="badge">⚠ Not deployed</span>
+    <h1>App not found or not deployed yet</h1>
+    <p class="sub">We couldn't find a deployed app for this address.</p>
+    <div class="kv">
+      <div><span>Hostname</span><code>${h}</code></div>
+      <div><span>App slug</span><code>${s}</code></div>
+    </div>
+    <h2>Possible causes</h2>
+    <ul>
+      <li>The app hasn't finished deploying yet</li>
+      <li>The deployment failed during build</li>
+      <li>This subdomain isn't mapped to an app</li>
+      <li>The URL is incorrect</li>
+    </ul>
+    <div class="row">
+      <a class="btn primary" href="https://daisan.ai/">Open Daisan AI</a>
+      <a class="btn ghost" href="https://daisan.ai/apps">Your apps</a>
+    </div>
+    <div class="ft">Daisan AI · daisan.ai</div>
+  </div>
+</body></html>`;
+  return new Response(html, { status: 404, headers: { 'content-type': 'text/html; charset=utf-8' } });
+}
+
 export default {
   async fetch(request: Request, env: Env, ctx: ExecutionContext): Promise<Response> {
     const url = new URL(request.url);
@@ -32,7 +94,7 @@ export default {
         const userWorker = env.dispatcher.get(workerName);
         return await userWorker.fetch(request);
       } catch (e) {
-        return new Response(`App "${workerName}" not found or not deployed yet.`, { status: 404 });
+        return notFoundResponse(host, workerName);
       }
     }
 
