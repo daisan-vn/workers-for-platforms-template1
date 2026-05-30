@@ -33,6 +33,14 @@
 			"database_id": "09fd2e67-bc5d-463f-ac9e-d591dc390e88"
 		}
 	],
+	// Service binding to the VibeSDK worker so sandbox preview subdomains
+	// (<port>-<sandboxId>-<token>.daisan.ai) are proxied to its proxyToSandbox.
+	"services": [
+		{
+			"binding": "VIBESDK",
+			"service": "vibesdk-production"
+		}
+	],
 	// Environment variables
 	"vars": {
 		// Dispatch namespace name - must match the namespace above.

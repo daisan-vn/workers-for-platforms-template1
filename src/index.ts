@@ -4,7 +4,14 @@ export interface Env {
   AI: Ai;
   ACCOUNT_ID: string;
   DISPATCH_NAMESPACE_API_TOKEN: string;
+  // Service binding to the VibeSDK worker (vibesdk-production). Sandbox preview
+  // subdomains are proxied to it because it owns the sandbox containers.
+  VIBESDK?: Fetcher;
 }
+
+// Sandbox preview subdomains look like: <port:4-5 digits>-<sandboxId>-<token:16 chars>
+// e.g. 3000-abc123-0123456789abcdef.daisan.ai
+const PREVIEW_SUBDOMAIN_RE = /^\d{4,5}-.+-[a-z0-9_-]{16}$/;
 
 export default {
   async fetch(request: Request, env: Env, ctx: ExecutionContext): Promise<Response> {
@@ -14,6 +21,13 @@ export default {
     // Nếu là subdomain (khác daisan.ai), route đến user worker
     if (host !== 'daisan.ai' && host.endsWith('.daisan.ai')) {
       const workerName = host.split('.')[0];
+
+      // Sandbox live previews are not deployed workers in the dispatch namespace —
+      // they are proxied by the VibeSDK worker (proxyToSandbox). Forward them.
+      if (PREVIEW_SUBDOMAIN_RE.test(workerName) && env.VIBESDK) {
+        return env.VIBESDK.fetch(request);
+      }
+
       try {
         const userWorker = env.dispatcher.get(workerName);
         return await userWorker.fetch(request);
